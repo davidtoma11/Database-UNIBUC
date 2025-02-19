@@ -1,7 +1,6 @@
 # Database Project Requirements
 Football Team - check the relational diagram
 
-"tables and insert.txt" - sql commands
 
 # Contents:
 1. Overview of the Database
