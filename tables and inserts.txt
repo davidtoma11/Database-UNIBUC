@@ -1,0 +1,679 @@
+-- stadion
+
+create table stadion (
+    id_stadion number(5) constraint pk_stadion primary key,
+    nume varchar2(20) unique,
+    locatie varchar2(20), 
+    capacitate number(6) constraint check_capacitate check(capacitate >= 0),
+    an_constructie number(4)
+);
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+-- echipa
+
+create table echipa(
+    id_echipa number(5) constraint pk_echipa primary key,
+    id_stadion number(5) constraint fk_echipa_stadion references stadion(id_stadion),
+    nume_echipa varchar(20) unique,
+    an_fondare number(4),
+    buget number(10)
+);
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+-- antrenor
+
+create table antrenor(
+    id_antrenor number(5) constraint pk_antrenor primary key,
+    nume varchar2(20),
+    prenume varchar2(20),
+    licenta char(2) constraint chk_licenta_valori check (licenta in ('DA', 'NU'))
+);
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+-- antrenament 
+
+create table antrenament(
+    id_antrenament number(5) constraint pk_antrenament primary key,
+    data date default sysdate,
+    tip varchar2(20)
+);
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+-- pozitie 
+
+create table pozitie(
+    id_pozitie number(5) constraint pk_pozitie primary key,
+    pozitie_standard varchar(2) constraint check_pozitie_1 check(pozitie_standard in ('GK','LB','CB','RB','CDM','CM','CAM','LM','RM','LW','RW','CF','ST')),
+    pozitie_alternativa varchar(2) constraint check_pozitie_2 check(pozitie_alternativa in ('GK','LB','CB','RB','CDM','CM','CAM','LM','RM','LW','RW','CF','ST'))
+);
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+-- jucator
+
+create table jucator(
+    id_jucator number(5) constraint pk_jucator primary key,
+    id_pozitie number(5) constraint fk_jucator__pozitie references pozitie(id_pozitie),
+    nume varchar2(20),
+    prenume varchar2(20),
+    an_nastere number(4) constraint check_an check(an_nastere <= 2023),
+    nationalitate varchar2(20),
+    cota number(10) constraint check_cota check(cota >= 0),
+    salariu number(10)
+);
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+-- statistica 
+
+create table statistica(
+    id_statistica number(5) constraint pk_statistica primary key,
+    nr_meciuri number(4) constraint check_nr_meciuri check(nr_meciuri >= 0),
+    nr_goluri number(4) constraint check_nr_goluri check(nr_goluri >= 0),
+    nr_assisturi number(4) constraint check_nr_assisturi check(nr_assisturi >= 0),
+    nr_trofee number(2) constraint check_nr_trofee check(nr_trofee >= 0)
+);
+ 
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+-- competitie 
+
+create table competitie(
+    id_competitie number(5) constraint pk_competitie primary key,
+    nume varchar2(30),
+    tip varchar2(20),
+    premiu number(8) 
+);
+
+------------------------------------------------------------------------------------------------------------------------------------------
+-- meci
+
+create table meci(
+    id_meci number(5) constraint pk_meci primary key,
+    data date default sysdate,
+    scor varchar(7) constraint check_scor check(scor like '% - %')
+);
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- Tabelul asociativ PERFORMEAZA
+
+create table performeaza(
+    id_echipa number(5),
+    id_jucator number(5),
+    constraint pk_performeaza primary key (id_echipa, id_jucator),
+    constraint fk_performeaza_echipa foreign key (id_echipa) references echipa(id_echipa),
+    constraint fk_performeaza_jucator foreign key (id_jucator) references jucator(id_jucator)
+);
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Tabelul asociativ LUCREAZA
+
+create table lucreaza(
+    id_echipa number(5),
+    id_antrenor number(5),
+    constraint pk_lucreaza primary key (id_echipa, id_antrenor),
+    constraint fk_lucreaza_echipa foreign key (id_echipa) references echipa(id_echipa),
+    constraint fk_lucreaza_antrenor foreign key (id_antrenor) references antrenor(id_antrenor)
+);
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Tabelul asociativ ADUNA
+
+
+create table aduna(
+    id_jucator number(5),
+    id_statistica number(5),
+    constraint pk_aduna primary key (id_jucator, id_statistica),
+    constraint fk_aduna_jucator foreign key (id_jucator) references jucator(id_jucator),
+    constraint fk_aduna_statistica foreign key (id_statistica) references statistica(id_statistica)
+);
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Tabelul asociativ ANTRENEAZA
+
+
+create table antreneaza(
+    id_jucator number(5),
+    id_antrenor number(5),
+    id_antrenament number(5),
+    constraint pk_antreneaza primary key (id_jucator, id_antrenor, id_antrenament),
+    constraint fk_antreneaza_jucator foreign key (id_jucator) references jucator(id_jucator),
+    constraint fk_antreneaza_antrenor foreign key (id_antrenor) references antrenor(id_antrenor),
+    constraint fk_antreneaza_antrenament foreign key (id_antrenament) references antrenament(id_antrenament)
+);
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Tabelul asociativ DISPUTA
+
+
+create table disputa(
+    id_echipa number(5),
+    id_competitie number(5),
+    id_meci number(5),
+    constraint pk_disputa primary key (id_echipa, id_competitie, id_meci),
+    constraint fk_disputa_echipa foreign key (id_echipa) references echipa(id_echipa),
+    constraint fk_disputa_competitie foreign key (id_competitie) references competitie(id_competitie),
+    constraint fk_disputa_meci foreign key (id_meci) references meci(id_meci)
+);
+
+
+
+
+5 - INSERAREA DATELOR COERENTE ÎN TABELE
+
+ --- secventa + inserari –> STADION
+create sequence id_stadion start with 1 increment by 1 minvalue 0 maxvalue 9999 nocycle;
+insert into stadion values(id_stadion.nextval, ‘Camp Nou’ , ‘Barcelona’ , 99000 , 1957)
+insert into stadion values(id_stadion.nextval, 'Ghencea', ‘Bucharest', 30000, 2020);
+insert into stadion values(id_stadion.nextval, 'Arena Nationala', 'Bucharest', 55000, 2011);
+insert into stadion values(id_stadion.nextval, 'San Siro', 'Milan', 80000, 1926);
+insert into stadion values(id_stadion.nextval, 'Ion Omblemenco', 'Craiova', 29000, 2017);
+insert into stadion values(id_stadion.nextval, 'Old Trafford', 'Manchester', 74500, 1910);
+
+
+
+--- secventa + inserari –> ECHIPA
+create sequence id_echipa start with 1 increment by 1 minvalue 0 maxvalue 9999 nocycle;
+insert into echipa values(id_echipa.nextval,1,’Manchester United’,1903,80000000);
+insert into echipa values(id_echipa.nextval, 7, 'CSU Craiova’, 2013, 4000000);
+insert into echipa values(id_echipa.nextval, 3, 'FC Barcelona', 1899, 95000000);
+insert into echipa values(id_echipa.nextval, 5, 'FC Steaua Bucuresti', 1947, 15000000);
+insert into echipa values(id_echipa.nextval, 7, 'U Craiova 1948', 1948, 2000000);
+insert into echipa values(id_echipa.nextval, 4, 'CSA Steaua’, 2017, 9500000);
+insert into echipa values(id_echipa.nextval, 6, 'AC Milan', 1899, 90000000);
+insert into echipa values(id_echipa.nextval, 6, 'Inter Milano', 1908, 85000000);
+
+
+
+--- secventa + inserari –> ANTRENOR
+create sequence id_antrenor start with 1 increment by 1 minvalue 0 maxvalue 9999 nocycle;
+insert into antrenor values(id_antrenor.nextval,’Ranar’,’Alberto’,’NU’);
+insert into antrenor values(id_antrenor.nextval, 'Sumudica', 'Marius', 'DA');
+insert into antrenor values(id_antrenor.nextval, 'Smith', 'John', 'DA');
+insert into antrenor values(id_antrenor.nextval, 'Garcia', 'Martin', 'NU');
+insert into antrenor values(id_antrenor.nextval, 'Brown', 'Michael', 'DA');
+insert into antrenor values(id_antrenor.nextval, 'Lopez', 'Alexander', 'NU');
+insert into antrenor values(id_antrenor.nextval, 'Lopez', 'Adrian Munteanu', 'DA');
+insert into antrenor values(id_antrenor.nextval, 'Nita', 'Robert', 'NU');
+insert into antrenor values(id_antrenor.nextval, 'Stoica', 'Mihai', 'NU')
+insert into antrenor values(id_antrenor.nextval, 'Lopez', 'Francisc', 'DA');
+
+
+
+--- secventa + inserari –> POZITIE
+create sequence id_jucator start with 1 increment by 1 minvalue 0 maxvalue 9999 nocycle;
+insert into pozitie values(id_pozitie.nextval,’CM’,CAM’)
+insert into pozitie values(id_pozitie.nextval,’CM’,CAM’)
+insert into pozitie values(id_pozitie.nextval, 'LB', 'CB');
+insert into pozitie values(id_pozitie.nextval, 'CDM', 'CM');
+insert into pozitie values(id_pozitie.nextval, 'CAM', 'CF');
+insert into pozitie values(id_pozitie.nextval, 'RM', 'RB');
+insert into pozitie values(id_pozitie.nextval, 'RW', 'RM');
+insert into pozitie values(id_pozitie.nextval, 'ST', 'CF');
+insert into pozitie values(id_pozitie.nextval, 'CB', ‘CDM');
+insert into pozitie values(id_pozitie.nextval, 'GK', ‘GK');
+
+
+
+--- secventa + inserari –> JUCATOR
+create sequence id_jucator start with 1 increment by 1 minvalue 0 maxvalue 9999 nocycle;
+insert into jucator values(id_jucator.nextval, 6, 'Toma', 'David', 2004, 'Romania', 23000000, 92000);
+insert into jucator values(id_jucator.nextval, 8, 'Martinez', 'Emi', 1997, 'Argentina', 24000000, 95000);
+insert into jucator values(id_jucator.nextval, 8, 'Kim', 'Min-ji', 1998, 'South Korea', 9000000, 78000);
+insert into jucator values(id_jucator.nextval, 7, 'Ferreira', 'Ricardo', 1993, 'Portugal', 12000000, 89000);
+insert into jucator values(id_jucator.nextval, 2, 'Mendoza', 'Javier', 1996, 'Mexico', 33000000, 92000);
+insert into jucator values(id_jucator.nextval, 7, 'Bakayoko', 'Tiemoué', 1995, 'France', 11000000, 88000);
+insert into jucator values(id_jucator.nextval, 3, 'Vidal', 'Arturo', 1993, 'Chile', 14000000, 93000);
+insert into jucator values(id_jucator.nextval, 5, 'Nguyen', 'Minh', 1997, 'Vietnam', 40000000, 80000);
+insert into jucator values(id_jucator.nextval, 5, 'Magala', 'Gabriel', 1992, 'Brazil', 13000000, 94000);
+insert into jucator values(id_jucator.nextval, 4, 'Lee', 'Soo-jin', 1996, 'South Korea', 115000000, 87000);
+insert into jucator values(id_jucator.nextval, 5, 'Andersen', 'Niklas', 2005, 'Denmark', 92000000, 92000);
+
+
+
+--- secventa + inserari –> STATISTICA
+create sequence id_statistica start with 1 increment by 1 minvalue 0 maxvalue 9999 nocycle;
+insert into statistica values(id_statistica.nextval, 482, 176, 103, 3);
+insert into statistica values(id_statistica.nextval, 351, 120, 85, 2);
+insert into statistica values(id_statistica.nextval, 264, 68, 42, 1);
+insert into statistica values(id_statistica.nextval, 178, 32, 21, 0);
+insert into statistica values(id_statistica.nextval, 219, 52, 30, 1);
+insert into statistica values(id_statistica.nextval, 97, 19, 10, 0);
+insert into statistica values(id_statistica.nextval, 143, 28, 18, 0);
+insert into statistica values(id_statistica.nextval, 413, 380, 205, 18);
+insert into statistica values(id_statistica.nextval, 140, 100, 50, 2);
+
+
+--- secventa + inserari –> ANTRENAMENT
+create sequence id_antrenament start with 1 increment by 1 minvalue 0 maxvalue 9999 nocycle;
+insert into antrenament values(id_antrenament.nextval, TO_DATE('25-04- 2023','DD-MM-YYYY'), ‘fizic’)
+insert into antrenament values(id_antrenament.nextval, TO_DATE('11-06- 2023','DD-MM-YYYY'), ‘fizic’)
+insert into antrenament values(id_antrenament.nextval, TO_DATE('22-03- 2023','DD-MM-YYYY'), ‘tehnic’)
+insert into antrenament values(id_antrenament.nextval, TO_DATE('05-01- 2023','DD-MM-YYYY'), ‘fizic’)
+insert into antrenament values(id_antrenament.nextval, TO_DATE('14-08- 2023','DD-MM-YYYY'), ‘tehnic’)
+insert into antrenament values(id_antrenament.nextval, TO_DATE('28-02- 2023','DD-MM-YYYY'), ‘zi de nastere’)
+
+
+--- secventa + inserari –> COMPETITIE
+create sequence id_competitie start with 1 increment by 1 minvalue 0 maxvalue 9999 nocycle;
+insert into competitie values(id_competitie.nextval,'Uefa Champions League' , 'Turneu' , 50000000);
+insert into competitie values(id_competitie.nextval,'Uefa Europa League' , 'Turneu' , 10000000);
+insert into competitie values(id_competitie.nextval,'SUPERLIGA' , 'Campionat' , 10000000);
+insert into competitie values(id_competitie.nextval,'Cupa Ligii ADEPLAST' , 'Turneu' , 500000);
+insert into competitie values(id_competitie.nextval,'Liga 2' , 'Campionat' , 4500000);
+
+
+
+--- secventa + inserari –> MECI
+create sequence id_meci start with 1 increment by 1 minvalue 0 maxvalue 9999 nocycle;
+insert into meci values(id_meci.nextval, TO_DATE('03-11- 2022','DD-MM-YYYY'), '1 - 1');
+insert into meci values(id_meci.nextval, TO_DATE('11-01- 2023','DD-MM-YYYY'), '1 - 1');
+insert into meci values(id_meci.nextval, TO_DATE('14-11- 2022','DD-MM-YYYY'), '3 - 1');
+insert into meci values(id_meci.nextval, TO_DATE('06-05- 2023','DD-MM-YYYY'), '5 - 2');
+insert into meci values(id_meci.nextval, TO_DATE('26-06- 2011','DD-MM-YYYY'), '1 - 0');
+insert into meci values(id_meci.nextval, TO_DATE('08-12- 2002','DD-MM-YYYY'), '17 - 14');
+insert into meci values(id_meci.nextval, TO_DATE('02-07- 2014','DD-MM-YYYY'), '7 - 1');
+
+
+--- inserari –> PERFOMEAZA
+insert into performeaza values(1,41);
+insert into performeaza values(14,42);
+insert into performeaza values(13,43);
+insert into performeaza values(7,44);
+insert into performeaza values(7,46);
+insert into performeaza values(2,45);
+insert into performeaza values(9,47);
+insert into performeaza values(9,50);
+insert into performeaza values(9,48);
+insert into performeaza values(10,51);
+insert into performeaza values(12,49);
+
+
+--- inserari –> LUCREAZA
+insert into lucreaza values(2,1);
+insert into lucreaza values(13,2);
+insert into lucreaza values(12,3);
+insert into lucreaza values(14,9);
+insert into lucreaza values(9,10);
+insert into lucreaza values(12,11);
+insert into lucreaza values(1,12);
+insert into lucreaza values(2,13);
+insert into lucreaza values(9,14);
+insert into lucreaza values(10,15);
+insert into lucreaza values(10,15);
+
+
+--- inserari –> ADUNA
+insert into aduna values(41,9);
+insert into aduna values(42,7);
+insert into aduna values(43,1);
+insert into aduna values(44,6);
+insert into aduna values(45,4);
+insert into aduna values(46,4);
+insert into aduna values(47,8);
+insert into aduna values(48,3);
+insert into aduna values(49,1);
+insert into aduna values(50,5);
+insert into aduna values(51,2);
+
+
+
+--- inserari –> ANTRENEAZA
+insert into antreneaza values(41,9,1);
+insert into antreneaza values(44,3,1);
+insert into antreneaza values(43,2,5);
+insert into antreneaza values(42,10,4);
+insert into antreneaza values(48,11,3);
+insert into antreneaza values(45,14,6);
+insert into antreneaza values(47,13,4);
+insert into antreneaza values(46,12,2);
+insert into antreneaza values(51,1,6);
+insert into antreneaza values(50,15,5);
+insert into antreneaza values(49,12,4);
+
+
+--- inserari –> DISPUTA
+insert into disputa values(1,1,5);
+insert into disputa values(13,5,4);
+insert into disputa values(14,5,6);
+insert into disputa values(9,4,1);
+insert into disputa values(7,2,3);
+insert into disputa values(7,4,1);
+insert into disputa values(2,3,2);
+insert into disputa values(12,3,7);
+insert into disputa values(2,3,1);
+insert into disputa values(10,3,3);
+
+
+
+6 - FORMULAȚI ÎN LIMBAJ NATURAL O PROBLEMĂ PE CARE SĂ O REZOLVAȚI FOLOSIND UN SUBPROGRAM STOCAT INDEPENDENT CARE SĂ UTILIZEZE TOATE CELE 3 TIPURI DE COLECȚII STUDIATE + APELATI SUBPROGRAMUL 
+
+      Sa se afiseze pentru fiecare echipa jucatorii acesteia, respectiv pentru fiecare jucator, toti antrenorii cu care a interactionat si numarul de antrenamente facut cu fiecare
+
+CREATE OR REPLACE PROCEDURE afisare_antrenamente_jucatori IS
+   -- Definirea unui RECORD pentru antrenor
+   TYPE antrenor_record IS RECORD (
+      id_antrenor antrenor.id_antrenor%TYPE,
+      nume_antrenor antrenor.nume%TYPE,
+      numar_antrenamente NUMBER
+   );
+   -- Definirea unui VECTOR pentru antrenori
+   TYPE vector_antrenori IS VARRAY(200) OF antrenor_record;
+
+   -- Definirea unui RECORD pentru antrenamente
+   TYPE antrenamente_record IS RECORD (
+      id_jucator jucator.id_jucator%TYPE,
+      nume_jucator jucator.nume%TYPE,
+      antrenori vector_antrenori
+   );
+
+   -- Definirea unui TABLOU IMBRICAT pentru antrenamente
+   TYPE antrenamente_nested_table IS TABLE OF antrenamente_record;
+
+   -- Definirea unui TABLOU INDEXAT pentru jucatori cu antrenamente
+   TYPE jucatori_antrenamente_indexed_table IS TABLE OF antrenamente_nested_table INDEX BY PLS_INTEGER;
+
+   -- Declararea variabilei pentru stocarea antrenamentelor pentru fiecare echipa
+   jucatori_cu_antrenamente jucatori_antrenamente_indexed_table;
+BEGIN
+   -- Iterarea prin fiecare echipa
+   FOR echipa_rec IN (SELECT DISTINCT id_echipa, nume_echipa FROM echipa)
+   LOOP
+      -- Inițializarea antrenamentelor pentru echipa curentă
+      jucatori_cu_antrenamente(echipa_rec.id_echipa) := antrenamente_nested_table();
+
+      -- Afișarea informațiilor despre echipa curenta
+      DBMS_OUTPUT.PUT_LINE('Echipa: ' || echipa_rec.nume_echipa);
+
+      -- Iterarea prin fiecare jucator din echipa curenta
+      FOR jucator_rec IN 
+      (SELECT DISTINCT j.id_jucator, j.nume || ' ' || j.prenume AS nume_complet 
+       FROM jucator j, performeaza p, echipa e 
+       WHERE j.id_jucator = p.id_jucator and p.id_echipa = echipa_rec.id_echipa)
+      LOOP
+         -- Inițializarea antrenorilor pentru jucătorul curent
+         DECLARE
+            antrenori vector_antrenori := vector_antrenori();
+         BEGIN
+            -- Golește vectorul antrenori
+            antrenori := vector_antrenori();
+            
+            -- Iterarea prin fiecare antrenor asociat jucătorului curent
+            FOR antrenor_rec IN (
+               SELECT DISTINCT a.id_antrenor, a.nume || ' ' || a.prenume AS nume_complet, COUNT(*) AS numar_antrenamente
+               FROM jucator j, antreneaza an, antrenor a
+               WHERE a.id_antrenor = an.id_antrenor AND j.id_jucator = jucator_rec.id_jucator
+               GROUP BY a.id_antrenor, a.nume, a.prenume
+            )
+            LOOP
+               -- Adăugarea antrenorului la vectorul de antrenori
+               antrenori.extend();
+               antrenori(antrenori.last) := antrenor_record(
+                  id_antrenor => antrenor_rec.id_antrenor,
+                  nume_antrenor => antrenor_rec.nume_complet,
+                  numar_antrenamente => antrenor_rec.numar_antrenamente
+               );
+            END LOOP;
+            
+            -- Afișarea informațiilor despre jucătorul curent
+            DBMS_OUTPUT.PUT_LINE('   Jucator: ' ||  jucator_rec.nume_complet);
+            
+             FOR i IN 1..antrenori.count
+             LOOP
+             DBMS_OUTPUT.PUT_LINE('      Antrenor: ' || antrenori(i).id_antrenor ||
+                              ', Nume: ' || antrenori(i).nume_antrenor ||
+                              ', Numar antrenamente: ' || antrenori(i).numar_antrenamente);
+              END LOOP; 
+         END;
+      END LOOP;    
+
+      -- Afișarea delimitatorului între echipe
+      DBMS_OUTPUT.PUT_LINE('---------------------------');
+      DBMS_OUTPUT.PUT_LINE('---------------------------');
+   END LOOP;
+END afisare_antrenamente_jucatori;
+/
+
+BEGIN
+   afisare_antrenamente_jucatori;
+END;
+/ 
+
+7 - FORMULATI IN LIMBAJ NATURAL O PROBLEMĂ PE CARE SĂ O REZOLVAȚI FOLOSIND UN SUBPROGRAM STOCAT INDEPENDENT CARE SĂ UTILIZEZE 2 TIPURI DIFERITE DE CURSOARE STUDIATE, UNUL DINTRE ACESTEA FIIND CURSOR PARAMETRIZAT, DEPENDENT DE CELĂLALT CURSOR. APELAȚI SUBPROGRAMUL.
+
+        Pentru fiecare echipă din Italia, afișați jucătorii care au evoluat în echipă, împreună cu statisticile fiecăruia, incluzând numărul de meciuri în care au participat și numărul total de contributii (goluri + asisturi).
+CREATE OR REPLACE PROCEDURE afisare_statistici_jucatori IS
+    -- Declarația cursorului explicit
+    CURSOR echipe_italia_cursor IS
+        SELECT id_echipa, nume_echipa
+        FROM echipa
+        WHERE nume_echipa IN ('AC Milan', 'Inter Milano');
+        
+    -- Declarația cursorului parametrizat
+    CURSOR statistici_cursor (id_echipa_param IN echipa.id_echipa%TYPE) IS
+        SELECT j.nume || ' ' || j.prenume AS nume_jucator,
+               s.nr_meciuri AS numar_meciuri,
+               SUM(s.nr_goluri + s.nr_assisturi) AS total_contributii
+        FROM jucator j
+        JOIN performeaza p ON j.id_jucator = p.id_jucator
+        JOIN echipa e ON e.id_echipa = p.id_echipa
+        JOIN aduna a ON j.id_jucator = a.id_jucator
+        JOIN statistica s ON s.id_statistica = a.id_statistica
+        WHERE e.id_echipa = id_echipa_param
+        GROUP BY j.nume, j.prenume, s.nr_meciuri;
+
+    -- Variabile pentru a stoca datele
+    v_id_echipa echipa.id_echipa%TYPE;
+    v_nume_echipa echipa.nume_echipa%TYPE;
+    v_nume_jucator VARCHAR2(200);
+    v_numar_meciuri NUMBER;
+    v_total_contributii NUMBER;
+
+BEGIN
+    -- Deschidem cursorul echipei din Italia
+    OPEN echipe_italia_cursor;
+
+    LOOP
+        FETCH echipe_italia_cursor INTO v_id_echipa, v_nume_echipa;
+        EXIT WHEN echipe_italia_cursor%NOTFOUND;
+
+        DBMS_OUTPUT.PUT_LINE('Echipa: ' || v_nume_echipa);
+
+        -- Deschidem cursorul parametrizat pentru echipa curentă
+        OPEN statistici_cursor(v_id_echipa);
+
+        LOOP
+            FETCH statistici_cursor INTO v_nume_jucator, v_numar_meciuri, v_total_contributii;
+            EXIT WHEN statistici_cursor%NOTFOUND;
+
+            DBMS_OUTPUT.PUT_LINE('  Jucator: ' || v_nume_jucator ||
+                                 ', Meciuri: ' || v_numar_meciuri ||
+                                 ', Total Contributii (Goluri + Asisturi): ' || v_total_contributii);
+
+        END LOOP;
+
+        -- Închidem cursorul parametrizat
+        CLOSE statistici_cursor;
+
+    END LOOP;
+
+    -- Închidem cursorul echipei din Italia
+    CLOSE echipe_italia_cursor;
+
+END afisare_statistici_jucatori;
+/
+
+-- Apelarea subprogramului
+BEGIN
+    afisare_statistici_jucatori;
+END;
+/
+
+
+
+8 - Formulați în limbaj natural o problemă pe care să o rezolvați folosind un subprogram stocat independent de tip funcție care să utilizeze într-o singură comandă SQL 3 dintre tabelele definite. 
+Definiți minim 2 excepții proprii. Apelați subprogramul astfel încât să evidențiați toate cazurile definite și tratate.
+
+     Pentru un jucator dat dupa nume, sa se afiseze numarul de antrenamente facute in subordinea unui antrenor licentiate.
+CREATE OR REPLACE FUNCTION numar_antrenamente_licentiate
+    (par_nume_jucator IN jucator.nume%TYPE)
+    RETURN NUMBER
+IS
+    v_numar_antrenamente NUMBER := 0;
+    v_id_jucator jucator.id_jucator%TYPE;
+BEGIN
+    -- Selectarea numărului de antrenamente sub antrenori licențiați
+    BEGIN
+        SELECT j.id_jucator, COUNT(*)
+        INTO v_id_jucator, v_numar_antrenamente
+        FROM jucator j
+        JOIN antreneaza a ON j.id_jucator = a.id_jucator
+        JOIN antrenament antr ON antr.id_antrenament = a.id_antrenament
+        JOIN antrenor an ON a.id_antrenor = an.id_antrenor
+        WHERE INITCAP(j.nume) = INITCAP(par_nume_jucator)
+          AND an.licenta = 'DA'
+        GROUP BY j.id_jucator;
+
+        -- Verificarea dacă numărul de antrenamente este 0
+        IF v_numar_antrenamente = 0 THEN
+            RAISE_APPLICATION_ERROR(-20000, 'Nu există antrenamente pentru jucătorul cu numele ' || par_nume_jucator);
+        END IF;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE_APPLICATION_ERROR(-20000, 'Nu există niciun jucător cu numele ' || par_nume_jucator);
+        WHEN TOO_MANY_ROWS THEN
+            RAISE_APPLICATION_ERROR(-20001, 'Există mai mulți jucători cu numele ' || par_nume_jucator);
+        WHEN OTHERS THEN
+            RAISE_APPLICATION_ERROR(-20002, 'A apărut o eroare neașteptată: ' || SQLERRM);
+    END;
+
+    RETURN v_numar_antrenamente;
+
+END numar_antrenamente_licentiate;
+/
+
+
+9 - Formulați în limbaj natural o problemă pe care să o rezolvați folosind un subprogram stocat independent de tip procedură care să utilizeze într-o singură comandă SQL 5 dintre tabelele definite. Tratați toate excepțiile care pot apărea, incluzând excepțiile NO_DATA_FOUND și TOO_MANY_ROWS. Apelați subprogramul astfel încât să evidențiați toate cazurile tratate.
+
+         Pentru o echipă specifică, să se calculeze și să se afișeze numărul total de trofee câștigate de jucătorii echipei respective.
+CREATE OR REPLACE PROCEDURE palmares_individual
+    (par_nume_echipa IN echipa.nume_echipa%TYPE)
+IS
+    v_id_echipa echipa.id_echipa%TYPE;
+    v_nume_echipa VARCHAR(20);
+    v_total_trofee NUMBER;
+BEGIN
+    BEGIN
+        -- Calcularea numărului total de trofee câștigate de jucătorii echipei specificate
+        SELECT e.id_echipa, e.nume_echipa, NVL(SUM(s.nr_trofee), 0)
+        INTO v_id_echipa, v_nume_echipa, v_total_trofee
+        FROM echipa e
+        JOIN performeaza p ON e.id_echipa = p.id_echipa
+        JOIN jucator j ON p.id_jucator = j.id_jucator
+        JOIN aduna a ON j.id_jucator = a.id_jucator
+        JOIN statistica s ON a.id_statistica = s.id_statistica
+        WHERE INITCAP(e.nume_echipa) = INITCAP(par_nume_echipa)
+        GROUP BY e.id_echipa, e.nume_echipa;
+
+        -- Afișarea rezultatului
+        DBMS_OUTPUT.PUT_LINE(v_nume_echipa || ' - ' || v_total_trofee || ' trofee');
+        
+
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('Nu exista echipa cu numele ' || par_nume_echipa);
+        WHEN TOO_MANY_ROWS THEN
+            DBMS_OUTPUT.PUT_LINE('Exista mai multe echipe cu același nume ' || par_nume_echipa);
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('A aparut o eroare neasteptata: ' || SQLERRM);
+    END;
+END;
+/
+
+
+BEGIN
+    palmares_individual('AC Milan');
+    palmares_individual('CSA Steaua');
+    palmares_individual('Manchester United');
+    palmares_individual('Juventus');
+END;
+
+
+
+
+MENTIUNE: Nu am eroarea de “TOO MANY ROWS” pentru ca am deja constrangere pe tabelul “echipa” ca numele acestora sa fie dstincte
+
+
+
+10 - Definiți un trigger de tip LMD la nivel de comandă. Declanșați trigger-ul.
+        Implementati un trigger prin care doar administratorul bazei de date poate modificari (INSERT, UPDATE, DELETE) asupra unei competitii din baza de date.
+
+CREATE OR REPLACE TRIGGER trg_restrict_competitie
+BEFORE INSERT OR UPDATE OR DELETE ON competitie
+FOR EACH ROW
+BEGIN
+    -- Verificam dacă utilizatorul curent este administratorul bazei de date
+    IF SYS_CONTEXT('USERENV', 'SESSION_USER') != 'ADMINISTRATOR' THEN
+        -- Ridicam o exceptie pentru a bloca operatiunea daca utilizatorul nu este administrator
+        RAISE_APPLICATION_ERROR(-20001, 'Ne pare rau, doar administratorul poate efectua aceasta modificare');
+    END IF;
+END;
+/
+
+
+11 - Definiți un trigger de tip LMD la nivel de linie. Declanșați trigger-ul.
+
+       Implementati un trigger care sa nu permita unui jucator sa aiba salariul mai mare de 128.000 
+
+CREATE OR REPLACE TRIGGER trg_fair_play_financiar
+BEFORE INSERT OR UPDATE ON jucator
+FOR EACH ROW
+BEGIN
+    -- Verificam dacă salariul este mai mare decât 128.000
+    IF :NEW.salariu > 128000 THEN
+        -- Ridicam o eroare dacă salariul depășește pragul
+        RAISE_APPLICATION_ERROR(-20002, 'Cf art. "38/308 - 2021", salariul unui jucator nu poate depasi 128K (restrictii de fair-play financiar');
+    END IF;
+END;
+/
+
+
+12 - Definiți un trigger de tip LDD. Declanșați trigger-ul.
+
+Implementati un trigger care sa nu permita modificari (CREATE, ALTER, DROP) decat intre orele 10 si 18
+CREATE OR REPLACE TRIGGER trg_restrict_modifications
+BEFORE CREATE OR ALTER OR DROP ON SCHEMA 
+DECLARE
+    v_current_hour NUMBER;
+BEGIN
+    -- Obtine ora curenta
+    v_current_hour := TO_NUMBER(TO_CHAR(SYSDATE, 'HH24'));
+
+    -- Verifica dacă ora curenta este în afara intervalului permis
+    IF v_current_hour NOT BETWEEN 10 AND 18 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Modificarile sunt permise doar in intervalul orar 10:00 - 18:00');
+    END IF;
+END;
+/
